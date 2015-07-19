@@ -73,7 +73,8 @@ def start_transaction(previous_database, previous_count_key):
                         previous_count_key[v] = count_key[v]
 
                     print("NO TRANSACTION")
-                return
+		else:
+		    return
             elif line == "END":
                 sys.exit(0)
         except EOFError:
