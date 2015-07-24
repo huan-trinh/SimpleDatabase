@@ -10,75 +10,104 @@
 #-------------------------------------------------------------------------------
 
 import sys
-from copy import deepcopy
 
-trans = 0
+class SimpleDatabase():
+    def __init__(self):
+        self.__database = {}
+        self.__count_key = {}
+        self.__recovery_log = []
+        self.__current_time = 0
+    def __del__(self):
+        self.__database.clear()
+        self.__count_key.clear()
+        self.__recovery_log.clear()
+    def __str__(self):
+        return "Simple Database"
+    def set(self, k, v):
+        if k in self.__database:
+            old_val = self.__database[k]
+            self.__count_key[old_val] -= 1
+            # add (k,v) to recovery log for possible rollback later
+            self.__recovery_log.append((self.__current_time-1,k,old_val))
+        self.__database[k] = v
+        cnt = 1
+        if v in self.__count_key:
+            cnt = self.__count_key[v] + 1
+        self.__count_key[v] = cnt
+    def get(self, k):
+        if k in self.__database:
+            return self.__database[k]
+        else:
+            return "NULL"
+    def unset(self, k):
+        if k in self.__database:
+            v = self.__database[k]
+            # add to recovery log for possible rollback later
+            self.__recovery_log.append((self.__current_time-1,k,v))
+            self.__count_key[v] -= 1
+            self.__database.pop(k,None)
+    def numEqualTo(self, v):
+        if v in self.__count_key:
+            return self.__count_key[v]
+        else:
+            return 0
+    def begin(self):
+        self.__current_time += 1
+    def commit(self):
+        self.__recovery_log.clear()
+        self.__current_time = 0
+    def rollback(self):
+        self.__current_time -= 1
+        if len(self.__recovery_log) == 0 and self.__current_time == 0:
+            self.__database.clear()
+            self.__count_key.clear()
+        else:
+            while len(self.__recovery_log) > 0:
+                (t,k,v) = self.__recovery_log[-1]
+                if t != self.__current_time:
+                    break
+                if k in self.__database:
+                    old_val = self.__database[k]
+                    self.__count_key[old_val] -= 1
+                self.__database[k] = v
+                self.__count_key[v] += 1
+                del self.__recovery_log[-1]
+    def haveTrans(self):
+        return True if self.__current_time > 0 else False
 
-def start_transaction(previous_database, previous_count_key):
-    global trans
-    database = deepcopy(previous_database)
-    count_key = deepcopy(previous_count_key)
+def start_transaction(sdb):
     while True:
         try:
             line = input()
             if line.startswith("SET"):
                 (k,v) = line.split()[-2:]
-                if k in database:
-                    old_val = database[k]
-                    count_key[old_val] -= 1
-                database[k] = v
-                cnt = 1
-                if v in count_key:
-                    cnt = count_key[v] + 1
-                count_key[v] = cnt
+                sdb.set(k,v)
             elif line.startswith("GET"):
                 k = line.split()[1]
-                if k in database:
-                    print(database[k])
-                else:
-                    print("NULL")
+                print(sdb.get(k))
             elif line.startswith("UNSET"):
                 k = line.split()[1]
-                if k in database:
-                    count_key[database[k]] -= 1
-                    database.pop(k, None)
+                sdb.unset(k)
             elif line.startswith("NUMEQUALTO"):
                 v = line.split()[1]
-                if v in count_key:
-                    print(count_key[v])
-                else:
-                    print(0)
+                print(sdb.numEqualTo(v))
             elif line == "BEGIN":
-                trans += 1
-                start_transaction(database, count_key)
+                sdb.begin()
             elif line == "COMMIT":
-                if trans == 0:
+                if not sdb.haveTrans():
                     print("NO TRANSACTION")
                 else:
-                    previous_database.clear()
-                    previous_count_key.clear()
-                    for k in database:
-                        previous_database[k] = database[k]
-                    for v in count_key:
-                        previous_count_key[v] = count_key[v]
-                    trans = 0
-                return
+                    sdb.commit()
             elif line == "ROLLBACK":
-                if trans == 0:
-                    previous_database.clear()
-                    previous_count_key.clear()
-                    for k in database:
-                        previous_database[k] = database[k]
-                    for v in count_key:
-                        previous_count_key[v] = count_key[v]
-
+                if not sdb.haveTrans():
                     print("NO TRANSACTION")
                 else:
-                    return
+                    sdb.rollback()
             elif line == "END":
                 sys.exit(0)
         except EOFError:
             sys.exit(0)
 
 if __name__ == '__main__':
-    start_transaction({},{})
+    sdb = SimpleDatabase()
+    start_transaction(sdb)

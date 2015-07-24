@@ -26,18 +26,19 @@ Your database should accept the following commands:
     END – Exit the program. Your program will always receive this as its last command.
 
 Commands will be fed to your program one at a time, with each command on its own line. Any output that your program generates should end with a newline character. Here are some example command sequences:
-Input 	Output
+Input
 SET ex 10
 GET ex
 UNSET ex
 GET ex
 END
-	
+
+Output
 10
 
 NULL
 
-Input 	Output
+Input
 SET a 10
 SET b 10
 NUMEQUALTO 10
@@ -46,7 +47,7 @@ SET b 30
 NUMEQUALTO 10
 END
 	
-
+Output
 2
 0
 
@@ -63,7 +64,7 @@ In addition to the above data commands, your program should also support databas
     COMMIT – Close all open transaction blocks, permanently applying the changes made in them. Print nothing if successful, or print NO TRANSACTION if no transaction is in progress.
 
 Any data command that is run outside of a transaction block should commit immediately. Here are some example command sequences:
-Input 	Output
+Input
 BEGIN
 SET a 10
 GET a
@@ -75,7 +76,8 @@ GET a
 ROLLBACK
 GET a
 END
-	
+
+Output
 
 10
 
@@ -86,7 +88,7 @@ END
 
 NULL
 
-Input 	Output
+Input
 BEGIN
 SET a 30
 BEGIN
@@ -95,15 +97,14 @@ COMMIT
 GET a
 ROLLBACK
 END
-	
 
-
+Output
 
 
 40
 NO TRANSACTION
 
-Input 	Output
+Input
 SET a 50
 BEGIN
 GET a
@@ -117,9 +118,8 @@ COMMIT
 GET a
 END
 	
-
+Output
 50
-
 
 
 NULL
@@ -128,7 +128,7 @@ NULL
 
 60
 
-Input 	Output
+Input
 SET a 10
 BEGIN
 NUMEQUALTO 10
@@ -141,6 +141,7 @@ COMMIT
 END
 	
 
+Output
 1
 
 
@@ -154,12 +155,14 @@ Input and Output Format
     Your program should expect input from standard input (stdin) and handle EOF.
 
     The above output examples are presented to match input commands with expected output. However, your program should output without empty lines in between. For example, given the example input below, your program should produce precisely the output below.
-    Input 	Output
+    Input
     SET ex 10
     GET ex
     UNSET ex
     GET ex
     END
+
+   	Output
     	10
     NULL
 
